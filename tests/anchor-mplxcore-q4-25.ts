@@ -302,4 +302,51 @@ describe("anchor-mplxcore-q4-25", () => {
       }
     });
   });
+
+  describe("UpdateNft", () => {
+    it("Updates an NFT name and URI", async () => {
+      const args = {
+        newName: "Updated NFT Name",
+        newUri: "https://devnet.irys.xyz/2YxUZextq7nrbWxQx4bsf2TQW4qFLWzRm24Q43kpiQFA",
+      };
+
+      await program.methods
+        .updateNft(args)
+        .accountsStrict({
+          authority: creator.publicKey,
+          asset: asset.publicKey,
+          collection: collection.publicKey,
+          collectionAuthority: collectionAuthorityPda,
+          coreProgram: MPL_CORE_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([creator])
+        .rpc();
+    });
+
+    it("Fails to update with unauthorized authority", async () => {
+      const args = {
+        newName: "Unauthorized Update",
+        newUri: "https://example.com/unauthorized",
+      };
+
+      try {
+        await program.methods
+          .updateNft(args)
+          .accountsStrict({
+            authority: unauthorizedAuthority.publicKey,
+            asset: asset.publicKey,
+            collection: collection.publicKey,
+            collectionAuthority: collectionAuthorityPda,
+            coreProgram: MPL_CORE_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+          })
+          .signers([unauthorizedAuthority])
+          .rpc();
+        assert.fail("Should have failed with unauthorized authority");
+      } catch (err) {
+        assert.equal(err.error.errorCode.code, "NotAuthorized", "Expected NotAuthorized error");
+      }
+    });
+  });
 });
